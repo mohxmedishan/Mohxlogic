@@ -146,9 +146,17 @@
       {name:'Clock',icon:'◷',description:'A future timed signal source.'},
       {name:'Splitter',icon:'⋔',description:'A placeholder signal routing component.'}
     ];
-    function openShop() { shopOverlay.classList.add('open'); }
-    function closeShop() { shopOverlay.classList.remove('open'); shopOverlay.classList.remove('has-details'); shopGrid.querySelectorAll('.selected').forEach(c=>c.classList.remove('selected')); }
+    let selectedShopItem = null;
+    function restoreShopSelection() {
+      if (selectedShopItem === null) return;
+      const item = placeholderItems[selectedShopItem];
+      const card = shopGrid.children[selectedShopItem];
+      if (item && card) selectShopItem(item, card);
+    }
+    function openShop() { shopOverlay.classList.add('open'); restoreShopSelection(); }
+    function closeShop() { shopOverlay.classList.remove('open'); }
     function selectShopItem(item, card) {
+      selectedShopItem = placeholderItems.indexOf(item);
       shopGrid.querySelectorAll('.selected').forEach(c=>c.classList.remove('selected'));
       card.classList.add('selected');
       shopOverlay.classList.add('has-details');
