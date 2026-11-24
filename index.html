@@ -58,6 +58,8 @@
     const zoomValue = document.querySelector('#zoomValue');
     let zoom = 1, offsetX = 0, offsetY = 0;
     let drag = null;
+    const pointers = new Map();
+    let pinch = null;
     const grid = 32;
     const minZoom = 0.25, maxZoom = 4;
 
@@ -75,46 +77,75 @@
       zoom = next;
       render();
     }
+    const distance = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+    const midpoint = (a,b) => ({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+
     canvas.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      drag = { x: e.clientX, y: e.clientY, ox: offsetX, oy: offsetY, id: e.pointerId };
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       canvas.setPointerCapture(e.pointerId);
-      canvas.classList.add('dragging');
+      if (pointers.size === 2) {
+        const pts=[...pointers.values()];
+        pinch={distance:distance(pts[0],pts[1]), zoom, center:midpoint(pts[0],pts[1]), ox:offsetX, oy:offsetY};
+        drag=null;
+        canvas.classList.remove('dragging');
+      } else if (pointers.size === 1) {
+        drag={x:e.clientX,y:e.clientY,ox:offsetX,oy:offsetY,id:e.pointerId};
+        canvas.classList.add('dragging');
+      }
     });
     canvas.addEventListener('pointermove', (e) => {
-      if (!drag || e.pointerId !== drag.id) return;
-      offsetX = drag.ox + e.clientX - drag.x;
-      offsetY = drag.oy + e.clientY - drag.y;
-      render();
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if (pointers.size >= 2 && pinch) {
+        const pts=[...pointers.values()];
+        const currentDistance=distance(pts[0],pts[1]);
+        const center=midpoint(pts[0],pts[1]);
+        const next=Math.max(minZoom,Math.min(maxZoom,pinch.zoom*(currentDistance/pinch.distance)));
+        const factor=next/pinch.zoom;
+        offsetX=center.x-(pinch.center.x-pinch.ox)*factor;
+        offsetY=center.y-(pinch.center.y-pinch.oy)*factor;
+        zoom=next;
+        render();
+      } else if (drag && drag.id === e.pointerId) {
+        offsetX=drag.ox+e.clientX-drag.x;
+        offsetY=drag.oy+e.clientY-drag.y;
+        render();
+      }
     });
-    function stopDrag(e) {
-      if (!drag || e.pointerId !== drag.id) return;
-      drag = null;
-      canvas.classList.remove('dragging');
+    function stopPointer(e) {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinch=null;
+      if (pointers.size === 1) {
+        const [id,p]=[...pointers.entries()][0];
+        drag={x:p.x,y:p.y,ox:offsetX,oy:offsetY,id};
+        canvas.classList.add('dragging');
+      } else {
+        drag=null;
+        canvas.classList.remove('dragging');
+      }
     }
-    canvas.addEventListener('pointerup', stopDrag);
-    canvas.addEventListener('pointercancel', stopDrag);
+    canvas.addEventListener('pointerup',stopPointer);
+    canvas.addEventListener('pointercancel',stopPointer);
+    canvas.addEventListener('lostpointercapture',stopPointer);
+
+    // Mouse wheel zoom; Shift+wheel pans horizontally.
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
-      if (e.ctrlKey || e.metaKey) {
-        zoomAt(zoom * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY);
-      } else if (e.shiftKey) {
+      if (e.shiftKey) {
         offsetX -= e.deltaY;
         render();
       } else {
-        offsetX -= e.deltaX;
-        offsetY -= e.deltaY;
-        render();
+        zoomAt(zoom * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY);
       }
     }, { passive: false });
     document.querySelector('#zoomIn').addEventListener('click', () => zoomAt(zoom * 1.2));
     document.querySelector('#zoomOut').addEventListener('click', () => zoomAt(zoom / 1.2));
-    zoomValue.addEventListener('click', () => { zoom = 1; offsetX = 0; offsetY = 0; render(); });
+    zoomValue.addEventListener('click', () => { zoom=1; offsetX=0; offsetY=0; render(); });
     tools.forEach((button) => button.addEventListener('click', () => {
       tools.forEach((tool) => tool.classList.remove('active'));
       button.classList.add('active');
     }));
     render();
-  </script>
-</body>
+  </script></body>
 </html>
