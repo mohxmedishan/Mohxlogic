@@ -41,8 +41,8 @@
     .shop-button svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .shop-overlay { position: fixed; inset: 20px; z-index: 20; background: rgba(255,255,255,.98); border: 1px solid #e6e6e6; border-radius: 20px; box-shadow: 0 20px 70px rgba(0,0,0,.12); display: none; overflow: hidden; }
     .shop-overlay.open { display: flex; }
-    .shop-main { min-width: 0; flex: 1; display: flex; flex-direction: column; transition: flex-basis .24s ease; }
-    .shop-overlay.has-details .shop-main { flex: 0 0 68%; }
+    .shop-main { min-width: 0; flex: 0 0 65%; display: flex; flex-direction: column; }
+    .shop-overlay.has-details .shop-main { flex-basis: 65%; }
     .shop-header { height: 64px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; flex-shrink: 0; }
     .shop-heading { font-size: 15px; font-weight: 650; }
     .shop-close { width: 34px; height: 34px; border: 1px solid #e7e7e7; border-radius: 50%; background: #fff; color: #666; cursor: pointer; font-size: 18px; }
@@ -53,17 +53,25 @@
     .shop-card-icon { height: 48px; display: grid; place-items: center; color: #777; font-size: 22px; }
     .shop-card-name { font-size: 12px; font-weight: 600; }
     .shop-card-desc { margin-top: 5px; font-size: 10px; line-height: 1.45; color: #999; }
-    .shop-details { flex: 0 0 32%; border-left: 1px solid #eee; display: none; flex-direction: column; min-width: 0; background: #fcfcfc; }
-    .shop-overlay.has-details .shop-details { display: flex; }
+    .shop-details { flex: 1 1 35%; border-left: 1px solid #eee; display: flex; flex-direction: column; min-width: 0; background: #fcfcfc; }
     .shop-detail-head { height: 64px; padding: 0 18px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .shop-detail-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .08em; }
     .shop-detail-body { padding: 24px 20px; overflow-y: auto; }
+    .shop-empty-state { height: 100%; min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: #999; gap: 10px; }
+    .shop-empty-icon { width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid #eee; border-radius: 16px; background: #fff; color: #aaa; font-size: 26px; }
+    .shop-empty-title { font-size: 13px; font-weight: 600; color: #777; }
+    .shop-empty-copy { max-width: 190px; font-size: 11px; line-height: 1.5; }
     .shop-detail-icon { height: 92px; display: grid; place-items: center; font-size: 36px; color: #777; border: 1px solid #eee; border-radius: 14px; background: #fff; margin-bottom: 20px; }
     .shop-detail-name { font-size: 16px; font-weight: 650; }
     .shop-detail-description { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.6; }
     .shop-detail-bottom { margin-top: auto; border-top: 1px solid #eee; padding: 16px 20px; color: #888; font-size: 11px; line-height: 1.5; }
+    .shop-buy { width: 100%; margin-top: 14px; padding: 12px 14px; border: 0; border-radius: 10px; background: #171717; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .16s ease, transform .16s ease, box-shadow .16s ease; }
+    .shop-buy:hover { background: #333; box-shadow: 0 6px 16px rgba(0,0,0,.12); transform: translateY(-1px); }
+    .shop-buy:active { transform: translateY(0) scale(.98); }
+    .shop-buy:disabled { background: #e5e5e5; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
+    .shop-buy-note { margin-top: 8px; min-height: 14px; font-size: 10px; color: #999; text-align: center; }
     
-    @media(max-width:700px) { .shop-button { bottom: 20px; left: calc(50% - 111px); width: 52px; height: 52px; } .shop-overlay { inset: 14px; border-radius: 16px; } .shop-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; } .shop-card { min-height: 112px; padding: 9px; } .shop-card-icon { height: 34px; font-size: 18px; } .shop-card-name { font-size: 10px; } .shop-card-desc { font-size: 9px; } .shop-overlay.has-details .shop-main { flex: 0 0 57%; } .shop-details { flex-basis: 43%; } .shop-detail-body { padding: 12px; } .shop-detail-icon { height: 66px; font-size: 28px; } .shop-detail-name { font-size: 13px; } .shop-detail-description { font-size: 10px; } .shop-detail-bottom { padding: 12px; font-size: 10px; } .shop-header { padding: 0 12px; } .shop-grid-wrap { padding: 10px; } }
+    @media(max-width:700px) { .shop-button { bottom: 20px; left: calc(50% - 111px); width: 52px; height: 52px; } .shop-overlay { inset: 14px; border-radius: 16px; } .shop-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; } .shop-card { min-height: 112px; padding: 9px; } .shop-card-icon { height: 34px; font-size: 18px; } .shop-card-name { font-size: 10px; } .shop-card-desc { font-size: 9px; } .shop-overlay.has-details .shop-main { flex-basis: 65%; } .shop-details { flex-basis: 35%; } .shop-detail-body { padding: 12px; } .shop-detail-icon { height: 66px; font-size: 28px; } .shop-detail-name { font-size: 13px; } .shop-detail-description { font-size: 10px; } .shop-detail-bottom { padding: 12px; font-size: 10px; } .shop-empty-icon { width: 48px; height: 48px; font-size: 20px; } .shop-empty-copy { font-size: 9px; } .shop-buy { padding: 10px; font-size: 11px; } .shop-header { padding: 0 12px; } .shop-grid-wrap { padding: 10px; } }
     @media(max-width:380px) { .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .shop-overlay.has-details .shop-main { flex: 0 0 52%; } .shop-details { flex-basis: 48%; } }
 
     @media (max-width: 520px) { .inventory-panel { left: 10px; top: 96px; bottom: 86px; width: min(78vw, 320px); min-width: 200px; max-width: 78vw; } }
@@ -92,9 +100,9 @@
       <div class="shop-grid-wrap"><div class="shop-grid" id="shopGrid"></div></div>
     </div>
     <aside class="shop-details" id="shopDetails">
-      <header class="shop-detail-head"><span class="shop-detail-label">Item details</span><button class="shop-close" id="shopDetailClose" aria-label="Close item details">×</button></header>
-      <div class="shop-detail-body" id="shopDetailBody"></div>
-      <div class="shop-detail-bottom">Placeholder item · Items and prices will be added later.</div>
+      <header class="shop-detail-head"><span class="shop-detail-label">Item details</span></header>
+      <div class="shop-detail-body" id="shopDetailBody"><div class="shop-empty-state"><div class="shop-empty-icon">⌑</div><div class="shop-empty-title">Select an item</div><div class="shop-empty-copy">Choose something from the catalog to see its details here.</div></div></div>
+      <div class="shop-detail-bottom">Placeholder item · Items and prices will be added later.<button class="shop-buy" id="shopBuy" disabled>Buy item</button><div class="shop-buy-note" id="shopBuyNote"></div></div>
     </aside>
   </section>
   <nav class="tools" aria-label="Canvas tools">
@@ -161,6 +169,10 @@
       card.classList.add('selected');
       shopOverlay.classList.add('has-details');
       shopDetailBody.innerHTML = '<div class="shop-detail-icon">'+item.icon+'</div><div class="shop-detail-name">'+item.name+'</div><div class="shop-detail-description">'+item.description+'</div>';
+      const buy = document.querySelector('#shopBuy');
+      buy.disabled = false;
+      buy.textContent = 'Buy item';
+      document.querySelector('#shopBuyNote').textContent = '';
     }
     placeholderItems.forEach(item => {
       const card=document.createElement('button');
@@ -171,7 +183,7 @@
     });
     shopButton.addEventListener('click',openShop);
     document.querySelector('#shopClose').addEventListener('click',closeShop);
-    document.querySelector('#shopDetailClose').addEventListener('click',()=>shopOverlay.classList.remove('has-details'));
+    document.querySelector('#shopBuy').addEventListener('click', () => { document.querySelector('#shopBuyNote').textContent = 'Purchases are not available yet.'; });
     shopOverlay.addEventListener('click',(e)=>{if(e.target===shopOverlay)closeShop();});
     shopOverlay.addEventListener('pointerdown', e => e.stopPropagation());
     shopOverlay.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
