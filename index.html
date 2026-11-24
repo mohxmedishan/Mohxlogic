@@ -8,7 +8,8 @@
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; color: #171717; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .canvas { position: fixed; inset: 0; background-color: #fff; background-image: linear-gradient(to right, #eeeeee 1px, transparent 1px), linear-gradient(to bottom, #eeeeee 1px, transparent 1px); background-size: 32px 32px; }
+    .canvas { position: fixed; inset: 0; background-color: #fff; background-image: linear-gradient(to right, #eeeeee 1px, transparent 1px), linear-gradient(to bottom, #eeeeee 1px, transparent 1px); background-size: 32px 32px; background-position: 0 0; cursor: grab; touch-action: none; }
+    .canvas.dragging { cursor: grabbing; }
     .canvas::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 50%, rgba(255,255,255,.7) 100%); }
     .topbar { position: fixed; top: 22px; left: 24px; right: 24px; display: flex; align-items: center; justify-content: space-between; z-index: 2; pointer-events: none; }
     .brand { display: flex; align-items: center; gap: 10px; }
@@ -23,20 +24,21 @@
     .tool.active { background: #171717; color: #fff; }
     .tool svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
     .hint { position: fixed; bottom: 38px; right: 24px; z-index: 2; font-size: 10px; color: #b0b0b0; letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
-    @media (max-width: 520px) { .topbar { top: 16px; left: 16px; right: 16px; } .status { left: 16px; top: 62px; } .hint { display: none; } .tools { bottom: 20px; } }
+    .zoom { position: fixed; right: 24px; bottom: 26px; display: flex; align-items: center; gap: 3px; padding: 5px; border: 1px solid #e7e7e7; border-radius: 999px; background: rgba(255,255,255,.94); box-shadow: 0 8px 30px rgba(0,0,0,.07); backdrop-filter: blur(12px); z-index: 3; }
+    .zoom button { width: 34px; height: 34px; border: 0; background: transparent; color: #555; border-radius: 50%; cursor: pointer; font-size: 18px; display: grid; place-items: center; }
+    .zoom button:hover { background: #f3f3f3; color: #111; }
+    .zoom-value { min-width: 42px; text-align: center; font-size: 11px; color: #777; font-variant-numeric: tabular-nums; cursor: pointer; }
+    @media (max-width: 520px) { .topbar { top: 16px; left: 16px; right: 16px; } .status { left: 16px; top: 62px; } .hint { display: none; } .tools { bottom: 20px; } .zoom { right: 12px; bottom: 20px; } .tool { width: 44px; height: 42px; } }
   </style>
 </head>
 <body>
   <main class="canvas" aria-label="Grid canvas"></main>
   <header class="topbar">
-    <div class="brand">
-      <div class="mark">m.</div>
-      <div class="brand-name">mohxlogic</div>
-    </div>
+    <div class="brand"><div class="mark">m.</div><div class="brand-name">mohxlogic</div></div>
     <div class="version">alpha · 01</div>
   </header>
   <div class="status">Untitled canvas</div>
-  <div class="hint">Infinite workspace · preview</div>
+  <div class="hint">Drag to move · scroll to zoom</div>
   <nav class="tools" aria-label="Canvas tools">
     <button class="tool active" data-tool="build" aria-label="Hammer tool" title="Hammer">
       <svg viewBox="0 0 24 24"><path d="m14.5 6.5 3-3 3 3-3 3"/><path d="m13 8 7-7"/><path d="m12.5 8.5 3 3-8.8 8.8a2.1 2.1 0 0 1-3-3L12.5 8.5Z"/></svg>
@@ -45,14 +47,74 @@
       <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="m6.5 7 .9 13h9.2l.9-13"/><path d="M9 7V4h6v3"/><path d="M10 10v7M14 10v7"/></svg>
     </button>
   </nav>
+  <div class="zoom" aria-label="Zoom controls">
+    <button id="zoomOut" aria-label="Zoom out" title="Zoom out">−</button>
+    <span class="zoom-value" id="zoomValue" title="Reset zoom and position">100%</span>
+    <button id="zoomIn" aria-label="Zoom in" title="Zoom in">+</button>
+  </div>
   <script>
+    const canvas = document.querySelector('.canvas');
     const tools = document.querySelectorAll('.tool');
-    tools.forEach((button) => {
-      button.addEventListener('click', () => {
-        tools.forEach((tool) => tool.classList.remove('active'));
-        button.classList.add('active');
-      });
+    const zoomValue = document.querySelector('#zoomValue');
+    let zoom = 1, offsetX = 0, offsetY = 0;
+    let drag = null;
+    const grid = 32;
+    const minZoom = 0.25, maxZoom = 4;
+
+    function render() {
+      const size = grid * zoom;
+      canvas.style.backgroundSize = size + 'px ' + size + 'px';
+      canvas.style.backgroundPosition = offsetX + 'px ' + offsetY + 'px';
+      zoomValue.textContent = Math.round(zoom * 100) + '%';
+    }
+    function zoomAt(next, cx = innerWidth / 2, cy = innerHeight / 2) {
+      next = Math.max(minZoom, Math.min(maxZoom, next));
+      const factor = next / zoom;
+      offsetX = cx - (cx - offsetX) * factor;
+      offsetY = cy - (cy - offsetY) * factor;
+      zoom = next;
+      render();
+    }
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      drag = { x: e.clientX, y: e.clientY, ox: offsetX, oy: offsetY, id: e.pointerId };
+      canvas.setPointerCapture(e.pointerId);
+      canvas.classList.add('dragging');
     });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      offsetX = drag.ox + e.clientX - drag.x;
+      offsetY = drag.oy + e.clientY - drag.y;
+      render();
+    });
+    function stopDrag(e) {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag = null;
+      canvas.classList.remove('dragging');
+    }
+    canvas.addEventListener('pointerup', stopDrag);
+    canvas.addEventListener('pointercancel', stopDrag);
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        zoomAt(zoom * Math.exp(-e.deltaY * 0.002), e.clientX, e.clientY);
+      } else if (e.shiftKey) {
+        offsetX -= e.deltaY;
+        render();
+      } else {
+        offsetX -= e.deltaX;
+        offsetY -= e.deltaY;
+        render();
+      }
+    }, { passive: false });
+    document.querySelector('#zoomIn').addEventListener('click', () => zoomAt(zoom * 1.2));
+    document.querySelector('#zoomOut').addEventListener('click', () => zoomAt(zoom / 1.2));
+    zoomValue.addEventListener('click', () => { zoom = 1; offsetX = 0; offsetY = 0; render(); });
+    tools.forEach((button) => button.addEventListener('click', () => {
+      tools.forEach((tool) => tool.classList.remove('active'));
+      button.classList.add('active');
+    }));
+    render();
   </script>
 </body>
 </html>
