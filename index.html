@@ -179,6 +179,17 @@
     const priceFmt = v => v+' MP';
     function toast(msg) { gameToast.textContent=msg; gameToast.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>gameToast.classList.remove('show'),1900); }
     function updateMoney() { mpCounter.textContent=mp+' MP'; }
+    function gridCoords(clientX,clientY){return {x:Math.round((clientX-innerWidth/2-offsetX)/zoom/32),y:Math.round((clientY-innerHeight/2-offsetY)/zoom/32)};}
+    function renderWorld(){worldLayer.style.transform='translate('+(innerWidth/2+offsetX)+'px,'+(innerHeight/2+offsetY)+'px) scale('+zoom+')';const sx=Math.round((innerWidth/2)/32)*32-80,sy=Math.round((innerHeight/2)/32)*32-80;sellZone.style.left=sx+'px';sellZone.style.top=sy+'px';machines.forEach(m=>{m.el.style.left=(m.x*32-16)+'px';m.el.style.top=(m.y*32-16)+'px';m.el.style.transform='rotate('+m.rotation*90+'deg)';});if(placement)renderGhost();if(eraseSelection)renderEraseActions();}
+    function inSellZone(x,y){const cx=Math.round(innerWidth/2/32),cy=Math.round(innerHeight/2/32);return x>=cx-2&&x<=cx+2&&y>=cy-2&&y<=cy+2;}
+    function clearActionOverlay(){document.querySelectorAll('.place-actions').forEach(e=>e.remove());}
+    function renderGhost(){if(!placement)return;let ghost=worldLayer.querySelector('.ghost-machine');if(!ghost){ghost=document.createElement('div');ghost.className='machine ghost-machine';worldLayer.appendChild(ghost);}ghost.textContent=placement.item.icon;ghost.style.left=(placement.x*32-16)+'px';ghost.style.top=(placement.y*32-16)+'px';ghost.style.transform='rotate('+placement.rotation*90+'deg)';let act=worldLayer.querySelector('.placement-controls');if(!act){act=document.createElement('div');act.className='place-actions placement-controls';worldLayer.appendChild(act);}act.style.left=(placement.x*32)+'px';act.style.top=(placement.y*32-20)+'px';act.innerHTML='<button aria-label="Rotate">↻</button><button aria-label="Place">✓</button>';act.children[0].onclick=e=>{e.stopPropagation();placement.rotation=(placement.rotation+1)%4;renderGhost();};act.children[1].onclick=e=>{e.stopPropagation();placeMachine();};}
+    function placeMachine(){if(!placement)return;const {item,x,y,rotation}=placement;if(inSellZone(x,y)||machines.some(m=>m.x===x&&m.y===y)){toast('That tile is occupied');return;}if(inventoryCounts[item.id]<1){toast('Item not in inventory');cancelPlacement();return;}inventoryCounts[item.id]--;const el=document.createElement('div');el.className='machine '+item.type;el.textContent=item.icon;el.title=item.name;worldLayer.appendChild(el);const m={item,x,y,rotation,el,lastUse:0};machines.push(m);el.addEventListener('click',e=>{e.stopPropagation();if(buildTool.classList.contains('active')){if(placement)return;placement={item,x:m.x,y:m.y,rotation:m.rotation,existing:m};renderGhost();toast('Confirm delete with ✓');}});placement=null;eraseSelection=null;clearActionOverlay();worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();updateInventory();toast('Placed '+item.name);}
+    function cancelPlacement(){placement=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();}
+    function renderEraseActions(){if(!eraseSelection)return;const m=eraseSelection;let act=worldLayer.querySelector('.erase-controls');if(!act){act=document.createElement('div');act.className='place-actions erase-controls';worldLayer.appendChild(act);}act.style.left=(m.x*32)+'px';act.style.top=(m.y*32-20)+'px';act.innerHTML='<button aria-label="Cancel">×</button><button aria-label="Delete">✓</button>';act.children[0].onclick=e=>{e.stopPropagation();eraseSelection=null;act.remove();};act.children[1].onclick=e=>{e.stopPropagation();const i=machines.indexOf(m);if(i>=0){machines.splice(i,1);m.el.remove();}eraseSelection=null;act.remove();toast('Deleted machine');};}
+    canvas.addEventListener('click',e=>{if(placement){const p=gridCoords(e.clientX,e.clientY);placement.x=p.x;placement.y=p.y;renderGhost();}else if(buildTool.classList.contains('active')&&eraseSelection){eraseSelection=null;clearActionOverlay();}});
+    function syncWorld(){renderWorld();}
+    
     function updateInventory() {
       inventoryPanel.querySelector('.inventory-empty').textContent = Object.values(inventoryCounts).some(n=>n>0) ? '' : 'Inventory is empty';
       let container=inventoryPanel.querySelector('.inventory-items');
@@ -207,7 +218,8 @@
     shopOverlay.addEventListener('click',(e)=>{if(e.target===shopOverlay)closeShop();});
     shopOverlay.addEventListener('pointerdown', e => e.stopPropagation());
     shopOverlay.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
-    buildTool.addEventListener('click', () => setInventoryOpen(inventoryOpen));
+    buildTool.addEventListener('click', () => {setInventoryOpen(inventoryOpen);eraseSelection=null;clearActionOverlay();});
+    document.querySelector('[data-tool="erase"]').addEventListener('click',()=>{cancelPlacement();eraseSelection=null;clearActionOverlay();});
     let resizing = false;
     inventoryResize.addEventListener('pointerdown', (e) => {
       e.preventDefault();
@@ -237,6 +249,7 @@
       canvas.style.backgroundSize = size + 'px ' + size + 'px';
       canvas.style.backgroundPosition = offsetX + 'px ' + offsetY + 'px';
       zoomValue.textContent = Math.round(zoom * 100) + '%';
+      renderWorld();
     }
     function zoomAt(next, cx = innerWidth / 2, cy = innerHeight / 2) {
       next = Math.max(minZoom, Math.min(maxZoom, next));
