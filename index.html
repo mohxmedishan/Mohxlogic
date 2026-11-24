@@ -36,7 +36,35 @@
     .inventory-resize::after { content: ""; position: absolute; top: 50%; right: 2px; transform: translateY(-50%); height: 36px; width: 2px; border-radius: 4px; background: #d5d5d5; }
     .inventory-toggle { border: 1px solid #e7e7e7; background: rgba(255,255,255,.9); border-radius: 999px; padding: 6px 10px; font-size: 10px; color: #777; cursor: pointer; }
     .inventory-show { position: fixed; left: 18px; top: 112px; z-index: 5; border: 1px solid #e6e6e6; border-radius: 999px; padding: 9px 13px; background: rgba(255,255,255,.95); box-shadow: 0 8px 24px rgba(0,0,0,.08); color: #555; font-size: 11px; cursor: pointer; display: none; backdrop-filter: blur(12px); }
-    .inventory-show.visible { display: block; }
+    .inventory-show.visible { display: block; }\n    .shop-button { position: fixed; left: calc(50% - 93px); bottom: 26px; width: 46px; height: 46px; border: 1px solid #e7e7e7; border-radius: 50%; background: rgba(255,255,255,.95); color: #555; display: grid; place-items: center; z-index: 4; box-shadow: 0 8px 30px rgba(0,0,0,.08); cursor: pointer; backdrop-filter: blur(12px); }
+    .shop-button svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .shop-overlay { position: fixed; inset: 14px; z-index: 20; background: rgba(255,255,255,.98); border: 1px solid #e6e6e6; border-radius: 20px; box-shadow: 0 20px 70px rgba(0,0,0,.12); display: none; overflow: hidden; }
+    .shop-overlay.open { display: flex; }
+    .shop-main { min-width: 0; flex: 1; display: flex; flex-direction: column; transition: width .25s ease, flex .25s ease; }
+    .shop-overlay.has-details .shop-main { flex: 0 0 68%; }
+    .shop-header { height: 64px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; flex-shrink: 0; }
+    .shop-heading { font-size: 15px; font-weight: 650; }
+    .shop-close { width: 34px; height: 34px; border: 1px solid #e7e7e7; border-radius: 50%; background: #fff; color: #666; cursor: pointer; font-size: 18px; }
+    .shop-grid-wrap { padding: 18px; overflow-y: auto; flex: 1; }
+    .shop-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
+    .shop-card { border: 1px solid #e8e8e8; background: #fff; border-radius: 13px; padding: 14px; min-height: 138px; display: flex; flex-direction: column; text-align: left; cursor: pointer; transition: border .15s, background .15s; }
+    .shop-card:hover,.shop-card.selected { border-color: #bdbdbd; background: #fafafa; }
+    .shop-card-icon { height: 48px; display: grid; place-items: center; color: #777; font-size: 22px; }
+    .shop-card-name { font-size: 12px; font-weight: 600; }
+    .shop-card-desc { margin-top: 5px; font-size: 10px; line-height: 1.45; color: #999; }
+    .shop-details { flex: 0 0 32%; border-left: 1px solid #eee; display: none; flex-direction: column; min-width: 0; background: #fcfcfc; animation: shopDetailIn .22s ease; }
+    .shop-overlay.has-details .shop-details { display: flex; }
+    .shop-detail-head { height: 64px; padding: 0 18px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .shop-detail-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: .08em; }
+    .shop-detail-body { padding: 24px 20px; overflow-y: auto; }
+    .shop-detail-icon { height: 92px; display: grid; place-items: center; font-size: 36px; color: #777; border: 1px solid #eee; border-radius: 14px; background: #fff; margin-bottom: 20px; }
+    .shop-detail-name { font-size: 16px; font-weight: 650; }
+    .shop-detail-description { margin-top: 10px; color: #888; font-size: 12px; line-height: 1.6; }
+    .shop-detail-bottom { margin-top: auto; border-top: 1px solid #eee; padding: 16px 20px; color: #888; font-size: 11px; line-height: 1.5; }
+    @keyframes shopDetailIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+    @media(max-width:700px) { .shop-overlay { inset: 10px; border-radius: 16px; } .shop-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; } .shop-card { min-height: 112px; padding: 9px; } .shop-card-icon { height: 34px; font-size: 18px; } .shop-card-name { font-size: 10px; } .shop-card-desc { font-size: 9px; } .shop-overlay.has-details .shop-main { flex: 0 0 57%; } .shop-details { flex-basis: 43%; } .shop-detail-body { padding: 12px; } .shop-detail-icon { height: 66px; font-size: 28px; } .shop-detail-name { font-size: 13px; } .shop-detail-description { font-size: 10px; } .shop-detail-bottom { padding: 12px; font-size: 10px; } .shop-header { padding: 0 12px; } .shop-grid-wrap { padding: 10px; } }
+    @media(max-width:380px) { .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .shop-overlay.has-details .shop-main { flex: 0 0 52%; } .shop-details { flex-basis: 48%; } }
+
     @media (max-width: 520px) { .inventory-panel { left: 10px; top: 96px; bottom: 86px; width: min(78vw, 320px); min-width: 200px; max-width: 78vw; } }
     .zoom-value { min-width: 42px; text-align: center; font-size: 11px; color: #777; font-variant-numeric: tabular-nums; cursor: pointer; }
     @media (max-width: 520px) { .topbar { top: 16px; left: 16px; right: 16px; } .status { left: 16px; top: 62px; } .hint { display: none; } .tools { bottom: 20px; } .zoom { right: 12px; bottom: 20px; } .tool { width: 44px; height: 42px; } }
@@ -56,6 +84,18 @@
   </aside>
 
   <button class="inventory-show" id="inventoryShow" type="button">Show inventory</button>
+  <button class="shop-button" id="shopButton" title="Shop" aria-label="Open shop"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 1.9-1.5L21 8H6"/><circle cx="9.5" cy="20" r="1"/><circle cx="17.5" cy="20" r="1"/></svg></button>
+  <section class="shop-overlay" id="shopOverlay" aria-label="Shop window">
+    <div class="shop-main">
+      <header class="shop-header"><div class="shop-heading">Shop</div><button class="shop-close" id="shopClose" aria-label="Close shop">×</button></header>
+      <div class="shop-grid-wrap"><div class="shop-grid" id="shopGrid"></div></div>
+    </div>
+    <aside class="shop-details" id="shopDetails">
+      <header class="shop-detail-head"><span class="shop-detail-label">Item details</span><button class="shop-close" id="shopDetailClose" aria-label="Close item details">×</button></header>
+      <div class="shop-detail-body" id="shopDetailBody"></div>
+      <div class="shop-detail-bottom">Placeholder item · Items and prices will be added later.</div>
+    </aside>
+  </section>
   <nav class="tools" aria-label="Canvas tools">
     <button class="tool active" data-tool="build" aria-label="Hammer tool" title="Hammer">
       <svg viewBox="0 0 24 24"><path d="m14.5 6.5 3-3 3 3-3 3"/><path d="m13 8 7-7"/><path d="m12.5 8.5 3 3-8.8 8.8a2.1 2.1 0 0 1-3-3L12.5 8.5Z"/></svg>
@@ -76,6 +116,11 @@
     const inventoryResize = document.querySelector('#inventoryResize');
     const inventoryShow = document.querySelector('#inventoryShow');
     const buildTool = document.querySelector('[data-tool="build"]');
+    const shopButton = document.querySelector('#shopButton');
+    const shopOverlay = document.querySelector('#shopOverlay');
+    const shopGrid = document.querySelector('#shopGrid');
+    const shopDetailBody = document.querySelector('#shopDetailBody');
+    const shopDetails = document.querySelector('#shopDetails');
     let inventoryOpen = true;
     function setInventoryOpen(open) {
       inventoryOpen = open;
@@ -86,6 +131,39 @@
     }
     inventoryToggle.addEventListener('click', () => setInventoryOpen(false));
     inventoryShow.addEventListener('click', () => setInventoryOpen(true));
+    const placeholderItems = [
+      {name:'Logic Gate',icon:'⌁',description:'A basic logic component. Placeholder entry for the future component catalog.'},
+      {name:'Wire',icon:'╱',description:'Connects components together. This is placeholder content.'},
+      {name:'Switch',icon:'◉',description:'A manually controlled input for testing circuits.'},
+      {name:'LED',icon:'◈',description:'A visual output indicator for a circuit.'},
+      {name:'AND Gate',icon:'∧',description:'Outputs true only when all inputs are true.'},
+      {name:'OR Gate',icon:'∨',description:'Outputs true when at least one input is true.'},
+      {name:'NOT Gate',icon:'¬',description:'Inverts a single input.'},
+      {name:'XOR Gate',icon:'⊕',description:'Outputs true when the inputs differ.'},
+      {name:'Input Node',icon:'●',description:'Placeholder input node for circuit experiments.'},
+      {name:'Output Node',icon:'○',description:'Placeholder output node for circuit experiments.'},
+      {name:'Clock',icon:'◷',description:'A future timed signal source.'},
+      {name:'Splitter',icon:'⋔',description:'A placeholder signal routing component.'}
+    ];
+    function openShop() { shopOverlay.classList.add('open'); }
+    function closeShop() { shopOverlay.classList.remove('open'); shopOverlay.classList.remove('has-details'); shopGrid.querySelectorAll('.selected').forEach(c=>c.classList.remove('selected')); }
+    function selectShopItem(item, card) {
+      shopGrid.querySelectorAll('.selected').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      shopOverlay.classList.add('has-details');
+      shopDetailBody.innerHTML = '<div class="shop-detail-icon">'+item.icon+'</div><div class="shop-detail-name">'+item.name+'</div><div class="shop-detail-description">'+item.description+'</div>';
+    }
+    placeholderItems.forEach(item => {
+      const card=document.createElement('button');
+      card.className='shop-card';
+      card.innerHTML='<div class="shop-card-icon">'+item.icon+'</div><div class="shop-card-name">'+item.name+'</div><div class="shop-card-desc">'+item.description+'</div>';
+      card.addEventListener('click',()=>selectShopItem(item,card));
+      shopGrid.appendChild(card);
+    });
+    shopButton.addEventListener('click',openShop);
+    document.querySelector('#shopClose').addEventListener('click',closeShop);
+    document.querySelector('#shopDetailClose').addEventListener('click',()=>shopOverlay.classList.remove('has-details'));
+    shopOverlay.addEventListener('click',(e)=>{if(e.target===shopOverlay)closeShop();});
     buildTool.addEventListener('click', () => setInventoryOpen(inventoryOpen));
     let resizing = false;
     inventoryResize.addEventListener('pointerdown', (e) => {
@@ -196,8 +274,9 @@
       if (button.dataset.tool === 'build') {
         setInventoryOpen(inventoryOpen);
       } else {
-        // Hide the panel while erasing, but preserve the user's show/hide preference.
+        // Hide inventory and its reopen shortcut while Erase mode is active.
         inventoryPanel.classList.remove('open');
+        inventoryShow.classList.remove('visible');
       }
     }));
     setInventoryOpen(true);
