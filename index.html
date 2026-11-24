@@ -290,7 +290,7 @@
     const midpoint = (a,b) => ({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
 
     canvas.addEventListener('pointerdown', (e) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (placement) { e.preventDefault(); return; }\n      if (e.pointerType === 'mouse' && e.button !== 0) return;
       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       canvas.setPointerCapture(e.pointerId);
       if (pointers.size === 2) {
