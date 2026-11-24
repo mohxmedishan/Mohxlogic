@@ -185,11 +185,37 @@
     function inSellZone(x,y){return x>=-2&&x<=2&&y>=-2&&y<=2;}
     function clearActionOverlay(){document.querySelectorAll('.place-actions').forEach(e=>e.remove());}
     function renderGhost(){if(!placement)return;let ghost=worldLayer.querySelector('.ghost-machine');if(!ghost){ghost=document.createElement('div');ghost.className='machine ghost-machine';worldLayer.appendChild(ghost);}ghost.textContent=placement.item.icon;ghost.style.left=(placement.x*32-16)+'px';ghost.style.top=(placement.y*32-16)+'px';ghost.style.transform='rotate('+placement.rotation*90+'deg)';let act=worldLayer.querySelector('.placement-controls');if(!act){act=document.createElement('div');act.className='place-actions placement-controls';worldLayer.appendChild(act);}act.style.left=(placement.x*32)+'px';act.style.top=(placement.y*32-20)+'px';act.innerHTML='<button aria-label="Place">✓</button><button aria-label="Rotate">↻</button>';act.children[0].onclick=e=>{e.stopPropagation();placeMachine();};act.children[1].onclick=e=>{e.stopPropagation();placement.rotation=(placement.rotation+1)%4;renderGhost();};}
-    function placeMachine(){if(!placement)return;const {item,x,y,rotation,existing}=placement;if(existing){machines.splice(machines.indexOf(existing),1);existing.el.remove();placement=null;eraseSelection=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();toast('Deleted machine');return;}if(inSellZone(x,y)||machines.some(m=>m.x===x&&m.y===y)){toast('That tile is occupied');return;}if(inventoryCounts[item.id]<1){toast('Item not in inventory');cancelPlacement();return;}inventoryCounts[item.id]--;const el=document.createElement('div');el.className='machine '+item.type;el.textContent=item.icon;el.title=item.name;worldLayer.appendChild(el);const m={item,x,y,rotation,el,lastUse:0,stored:0,contents:[]};machines.push(m);el.addEventListener('click',e=>{e.stopPropagation();if(m.item.type==='extractor'&&buildTool.classList.contains('active'&&!document.querySelector('[data-tool=\"erase\]').classList.contains('active'))){const now=Date.now();if(now-m.lastUse<2000){toast('Extractor cooling down');return;}m.lastUse=now;if(m.contents.length>=5){toast('Extractor storage full · 5/5');return;}m.contents.push('Mohx');toast('Produced Mohx · '+m.contents.length+'/5');m.el.title='Manual Extractor · '+m.contents.length+'/5 Mohx';return;}if(document.querySelector('[data-tool="erase"]').classList.contains('active')){eraseSelection=m;placement=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();renderEraseActions();toast('Confirm deletion with ✓');}});placement=null;eraseSelection=null;clearActionOverlay();worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();updateInventory();toast('Placed '+item.name);}
+    function placeMachine(){if(!placement)return;const {item,x,y,rotation,existing}=placement;if(existing){machines.splice(machines.indexOf(existing),1);existing.el.remove();placement=null;eraseSelection=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();toast('Deleted machine');return;}if(inSellZone(x,y)||machines.some(m=>m.x===x&&m.y===y)){toast('That tile is occupied');return;}if(inventoryCounts[item.id]<1){toast('Item not in inventory');cancelPlacement();return;}inventoryCounts[item.id]--;const el=document.createElement('div');el.className='machine '+item.type;el.textContent=item.icon;el.title=item.name;worldLayer.appendChild(el);const m={item,x,y,rotation,el,lastUse:0,stored:0,contents:[]};machines.push(m);el.addEventListener('click',e=>{e.stopPropagation();if(m.item.type==='extractor'&&buildTool.classList.contains('active')&&!document.querySelector('[data-tool="erase"]').classList.contains('active')){const now=Date.now();if(now-m.lastUse<2000){toast('Extractor cooling down');return;}m.lastUse=now;if(m.contents.length>=5){toast('Extractor storage full · 5/5');return;}m.contents.push('Mohx');toast('Produced Mohx · '+m.contents.length+'/5');m.el.title='Manual Extractor · '+m.contents.length+'/5 Mohx';return;}if(document.querySelector('[data-tool="erase"]').classList.contains('active')){eraseSelection=m;placement=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();renderEraseActions();toast('Confirm deletion with ✓');}});placement=null;eraseSelection=null;clearActionOverlay();worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();updateInventory();toast('Placed '+item.name);}
     function cancelPlacement(){placement=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();}
     function renderEraseActions(){if(!eraseSelection)return;const m=eraseSelection;let act=worldLayer.querySelector('.erase-controls');if(!act){act=document.createElement('div');act.className='place-actions erase-controls';worldLayer.appendChild(act);}act.style.left=(m.x*32)+'px';act.style.top=(m.y*32-20)+'px';act.innerHTML='<button aria-label="Delete">✓</button><button aria-label="Cancel">×</button>';act.children[0].onclick=e=>{e.stopPropagation();const i=machines.indexOf(m);if(i>=0){machines.splice(i,1);m.el.remove();}eraseSelection=null;act.remove();toast('Deleted machine');};act.children[1].onclick=e=>{e.stopPropagation();eraseSelection=null;act.remove();};}
     canvas.addEventListener('click',e=>{if(placement){const p=gridCoords(e.clientX,e.clientY);placement.x=p.x;placement.y=p.y;renderGhost();}else eraseSelection=null;});
-    function syncWorld(){renderWorld();}
+    function syncWorld(){renderWorld();}\n    function dirFor(m){return ((m.rotation||0)%4+4)%4;}
+    const dirs=[{x:1,y:0},{x:0,y:1},{x:-1,y:0},{x:0,y:-1}];
+    function at(x,y){return machines.find(m=>m.x===x&&m.y===y);}
+    function conveyorOutput(m){const d=dirs[dirFor(m)];return {x:m.x+d.x,y:m.y+d.y};}
+    function updateMachineTitles(){machines.forEach(m=>{if(m.item.type==='extractor')m.el.title='Manual Extractor · '+m.contents.length+'/5 Mohx';else m.el.title=m.item.name+(m.contents.length?' · '+m.contents.length+' Mohx':'');});}
+    function sellAtZone(x,y){return inSellZone(x,y);}
+    function simTick(){
+      const snapshot=machines.map(m=>({m,items:[...(m.contents||[])]}));
+      snapshot.forEach(({m,items})=>{if(m.item.type==='extractor'&&items.length&& !machines.some(b=>b.item.type==='conveyor'&&Math.abs(b.x-m.x)+Math.abs(b.y-m.y)===1)){return;}});
+      // Extractors with no adjacent belt retain Mohx in their 5-slot container.
+      machines.filter(m=>m.item.type==='extractor').forEach(ex=>{
+        if(ex.contents.length===0)return;
+        const belt=machines.find(b=>b.item.type==='conveyor'&&Math.abs(b.x-ex.x)+Math.abs(b.y-ex.y)===1);
+        if(belt){ex.contents.shift();belt.contents=belt.contents||[];if(belt.contents.length<1)belt.contents.push('Mohx');}
+      });
+      // Move one Mohx per conveyor per tick along its rotated output.
+      const moves=[];
+      machines.filter(m=>m.item.type==='conveyor'&&(m.contents||[]).length).forEach(b=>{
+        const p=conveyorOutput(b),next=at(p.x,p.y);
+        if(sellAtZone(p.x,p.y)){moves.push({from:b,sell:true});}
+        else if(next&&next.item.type==='conveyor'&&(!next.contents||next.contents.length===0)){moves.push({from:b,to:next});}
+      });
+      moves.forEach(move=>{move.from.contents.shift();if(move.sell){mp++;updateMoney();toast('Sold 1 Mohx · +1 MP');}else{move.to.contents=move.to.contents||[];move.to.contents.push('Mohx');}});
+      updateMachineTitles();
+    }
+    setInterval(simTick,1000);
+
     
     function updateInventory() {
       inventoryPanel.querySelector('.inventory-empty').textContent = Object.values(inventoryCounts).some(n=>n>0) ? '' : 'Inventory is empty';
