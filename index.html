@@ -23,7 +23,7 @@
     .tool:active { transform: scale(.94); }
     .tool.active { background: #171717; color: #fff; }
     .tool svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .hint { position: fixed; bottom: 38px; right: 24px; z-index: 2; font-size: 10px; color: #b0b0b0; letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
+    .hint { display: none; }
     .zoom { position: fixed; right: 24px; bottom: 26px; display: flex; align-items: center; gap: 3px; padding: 5px; border: 1px solid #e7e7e7; border-radius: 999px; background: rgba(255,255,255,.94); box-shadow: 0 8px 30px rgba(0,0,0,.07); backdrop-filter: blur(12px); z-index: 3; }
     .zoom button { width: 34px; height: 34px; border: 0; background: transparent; color: #555; border-radius: 50%; cursor: pointer; font-size: 18px; display: grid; place-items: center; }
     .zoom button:hover { background: #f3f3f3; color: #111; }
@@ -35,6 +35,8 @@
     .inventory-resize { position: absolute; right: -3px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; touch-action: none; }
     .inventory-resize::after { content: ""; position: absolute; top: 50%; right: 2px; transform: translateY(-50%); height: 36px; width: 2px; border-radius: 4px; background: #d5d5d5; }
     .inventory-toggle { border: 1px solid #e7e7e7; background: rgba(255,255,255,.9); border-radius: 999px; padding: 6px 10px; font-size: 10px; color: #777; cursor: pointer; }
+    .inventory-show { position: fixed; left: 18px; top: 112px; z-index: 5; border: 1px solid #e6e6e6; border-radius: 999px; padding: 9px 13px; background: rgba(255,255,255,.95); box-shadow: 0 8px 24px rgba(0,0,0,.08); color: #555; font-size: 11px; cursor: pointer; display: none; backdrop-filter: blur(12px); }
+    .inventory-show.visible { display: block; }
     @media (max-width: 520px) { .inventory-panel { left: 10px; top: 96px; bottom: 86px; width: min(78vw, 320px); min-width: 200px; max-width: 78vw; } }
     .zoom-value { min-width: 42px; text-align: center; font-size: 11px; color: #777; font-variant-numeric: tabular-nums; cursor: pointer; }
     @media (max-width: 520px) { .topbar { top: 16px; left: 16px; right: 16px; } .status { left: 16px; top: 62px; } .hint { display: none; } .tools { bottom: 20px; } .zoom { right: 12px; bottom: 20px; } .tool { width: 44px; height: 42px; } }
@@ -53,7 +55,7 @@
     <div class="inventory-resize" id="inventoryResize" aria-label="Resize inventory panel"></div>
   </aside>
 
-  <div class="hint">Drag to move · scroll to zoom</div>
+  <button class="inventory-show" id="inventoryShow" type="button">Show inventory</button>
   <nav class="tools" aria-label="Canvas tools">
     <button class="tool active" data-tool="build" aria-label="Hammer tool" title="Hammer">
       <svg viewBox="0 0 24 24"><path d="m14.5 6.5 3-3 3 3-3 3"/><path d="m13 8 7-7"/><path d="m12.5 8.5 3 3-8.8 8.8a2.1 2.1 0 0 1-3-3L12.5 8.5Z"/></svg>
@@ -72,14 +74,18 @@
     const inventoryPanel = document.querySelector('#inventoryPanel');
     const inventoryToggle = document.querySelector('#inventoryToggle');
     const inventoryResize = document.querySelector('#inventoryResize');
+    const inventoryShow = document.querySelector('#inventoryShow');
     const buildTool = document.querySelector('[data-tool="build"]');
     let inventoryOpen = true;
     function setInventoryOpen(open) {
       inventoryOpen = open;
-      inventoryPanel.classList.toggle('open', open && buildTool.classList.contains('active'));
-      inventoryToggle.textContent = open ? 'Hide' : 'Show';
+      const isBuild = buildTool.classList.contains('active');
+      inventoryPanel.classList.toggle('open', open && isBuild);
+      inventoryShow.classList.toggle('visible', !open && isBuild);
+      inventoryToggle.textContent = 'Hide';
     }
-    inventoryToggle.addEventListener('click', () => setInventoryOpen(!inventoryOpen));
+    inventoryToggle.addEventListener('click', () => setInventoryOpen(false));
+    inventoryShow.addEventListener('click', () => setInventoryOpen(true));
     buildTool.addEventListener('click', () => setInventoryOpen(inventoryOpen));
     let resizing = false;
     inventoryResize.addEventListener('pointerdown', (e) => {
