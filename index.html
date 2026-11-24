@@ -27,6 +27,15 @@
     .zoom { position: fixed; right: 24px; bottom: 26px; display: flex; align-items: center; gap: 3px; padding: 5px; border: 1px solid #e7e7e7; border-radius: 999px; background: rgba(255,255,255,.94); box-shadow: 0 8px 30px rgba(0,0,0,.07); backdrop-filter: blur(12px); z-index: 3; }
     .zoom button { width: 34px; height: 34px; border: 0; background: transparent; color: #555; border-radius: 50%; cursor: pointer; font-size: 18px; display: grid; place-items: center; }
     .zoom button:hover { background: #f3f3f3; color: #111; }
+    .inventory-panel { position: fixed; left: 18px; top: 112px; bottom: 94px; width: 24vw; min-width: 240px; max-width: 420px; z-index: 5; display: none; background: rgba(255,255,255,.94); border: 1px solid #e6e6e6; border-radius: 16px; box-shadow: 0 14px 40px rgba(0,0,0,.09); backdrop-filter: blur(16px); overflow: hidden; }
+    .inventory-panel.open { display: flex; flex-direction: column; }
+    .inventory-header { padding: 16px 18px; border-bottom: 1px solid #ededed; display: flex; align-items: center; justify-content: space-between; }
+    .inventory-title { font-size: 12px; font-weight: 650; letter-spacing: .02em; }
+    .inventory-empty { flex: 1; display: grid; place-items: center; color: #b0b0b0; font-size: 11px; }
+    .inventory-resize { position: absolute; right: -3px; top: 0; bottom: 0; width: 7px; cursor: ew-resize; touch-action: none; }
+    .inventory-resize::after { content: ""; position: absolute; top: 50%; right: 2px; transform: translateY(-50%); height: 36px; width: 2px; border-radius: 4px; background: #d5d5d5; }
+    .inventory-toggle { border: 1px solid #e7e7e7; background: rgba(255,255,255,.9); border-radius: 999px; padding: 6px 10px; font-size: 10px; color: #777; cursor: pointer; }
+    @media (max-width: 520px) { .inventory-panel { left: 10px; top: 96px; bottom: 86px; width: min(78vw, 320px); min-width: 200px; max-width: 78vw; } }
     .zoom-value { min-width: 42px; text-align: center; font-size: 11px; color: #777; font-variant-numeric: tabular-nums; cursor: pointer; }
     @media (max-width: 520px) { .topbar { top: 16px; left: 16px; right: 16px; } .status { left: 16px; top: 62px; } .hint { display: none; } .tools { bottom: 20px; } .zoom { right: 12px; bottom: 20px; } .tool { width: 44px; height: 42px; } }
   </style>
@@ -38,6 +47,12 @@
     <div class="version">alpha · 01</div>
   </header>
   <div class="status">Untitled canvas</div>
+  <aside class="inventory-panel" id="inventoryPanel" aria-label="Inventory panel">
+    <div class="inventory-header"><span class="inventory-title">INVENTORY</span><button class="inventory-toggle" id="inventoryToggle">Hide</button></div>
+    <div class="inventory-empty">Inventory is empty</div>
+    <div class="inventory-resize" id="inventoryResize" aria-label="Resize inventory panel"></div>
+  </aside>
+
   <div class="hint">Drag to move · scroll to zoom</div>
   <nav class="tools" aria-label="Canvas tools">
     <button class="tool active" data-tool="build" aria-label="Hammer tool" title="Hammer">
@@ -54,6 +69,33 @@
   </div>
   <script>
     const canvas = document.querySelector('.canvas');
+    const inventoryPanel = document.querySelector('#inventoryPanel');
+    const inventoryToggle = document.querySelector('#inventoryToggle');
+    const inventoryResize = document.querySelector('#inventoryResize');
+    const buildTool = document.querySelector('[data-tool="build"]');
+    let inventoryOpen = true;
+    function setInventoryOpen(open) {
+      inventoryOpen = open;
+      inventoryPanel.classList.toggle('open', open && buildTool.classList.contains('active'));
+      inventoryToggle.textContent = open ? 'Hide' : 'Show';
+    }
+    inventoryToggle.addEventListener('click', () => setInventoryOpen(!inventoryOpen));
+    buildTool.addEventListener('click', () => setInventoryOpen(inventoryOpen));
+    let resizing = false;
+    inventoryResize.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizing = true;
+      inventoryResize.setPointerCapture(e.pointerId);
+    });
+    inventoryResize.addEventListener('pointermove', (e) => {
+      if (!resizing) return;
+      const width = Math.max(200, Math.min(window.innerWidth * 0.45, e.clientX - inventoryPanel.getBoundingClientRect().left));
+      inventoryPanel.style.width = width + 'px';
+    });
+    function stopResize() { resizing = false; }
+    inventoryResize.addEventListener('pointerup', stopResize);
+    inventoryResize.addEventListener('pointercancel', stopResize);
+
     const tools = document.querySelectorAll('.tool');
     const zoomValue = document.querySelector('#zoomValue');
     let zoom = 1, offsetX = 0, offsetY = 0;
@@ -145,7 +187,9 @@
     tools.forEach((button) => button.addEventListener('click', () => {
       tools.forEach((tool) => tool.classList.remove('active'));
       button.classList.add('active');
+      setInventoryOpen(button.dataset.tool === 'build' && inventoryOpen);
     }));
+    setInventoryOpen(true);
     render();
   </script></body>
 </html>
