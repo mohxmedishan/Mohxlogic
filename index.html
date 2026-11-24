@@ -187,7 +187,12 @@
     tools.forEach((button) => button.addEventListener('click', () => {
       tools.forEach((tool) => tool.classList.remove('active'));
       button.classList.add('active');
-      setInventoryOpen(button.dataset.tool === 'build' && inventoryOpen);
+      if (button.dataset.tool === 'build') {
+        setInventoryOpen(inventoryOpen);
+      } else {
+        // Hide the panel while erasing, but preserve the user's show/hide preference.
+        inventoryPanel.classList.remove('open');
+      }
     }));
     setInventoryOpen(true);
     render();
