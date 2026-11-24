@@ -71,6 +71,25 @@
     .shop-buy:disabled { background: #e5e5e5; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
     .shop-buy-note { margin-top: 8px; min-height: 14px; font-size: 10px; color: #999; text-align: center; }
     
+    .shop-overlay { inset: 24px; }
+    .shop-close { position:absolute; top:12px; right:12px; z-index:5; }
+    .shop-header { justify-content:flex-start; padding-right:58px; }
+    .shop-card-price { margin-top:auto; padding-top:9px; font-size:10px; font-weight:600; color:#666; }
+    .shop-card-owned { margin-top:4px; font-size:10px; color:#999; }
+    .shop-buy-note { color:#777; }
+    .world-layer { position:fixed; inset:0; z-index:1; pointer-events:none; transform-origin:0 0; }
+    .sell-zone { position:absolute; width:160px; height:160px; border:2px dashed #777; background:rgba(255,255,255,.75); display:grid; place-items:center; text-align:center; color:#555; font-size:11px; letter-spacing:.08em; font-weight:600; }
+    .machine { position:absolute; width:32px; height:32px; display:grid; place-items:center; border:1px solid #888; border-radius:6px; background:rgba(255,255,255,.96); color:#555; font-size:17px; box-shadow:0 3px 8px rgba(0,0,0,.08); pointer-events:auto; cursor:pointer; user-select:none; }
+    .machine.conveyor { background:#f7f7f7; }
+    .machine.extractor { background:#fff8ed; border-color:#d8ad76; color:#9b6b29; }
+    .ghost-machine { opacity:.5; outline:2px dashed #777; pointer-events:none; }
+    .place-actions { position:absolute; display:flex; gap:5px; transform:translate(-50%,-100%); margin-top:-10px; pointer-events:auto; }
+    .place-actions button { width:30px;height:30px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#444;box-shadow:0 4px 10px rgba(0,0,0,.1);font-size:15px;cursor:pointer; }
+    .mp-counter { position:fixed; right:24px; top:72px; z-index:3; padding:8px 12px; border:1px solid #e5e5e5; border-radius:999px; background:rgba(255,255,255,.9); font-size:11px; color:#555; }
+    .game-toast { position:fixed; left:50%; top:80px; transform:translateX(-50%); z-index:30; padding:9px 14px; border:1px solid #e7e7e7; border-radius:999px; background:rgba(255,255,255,.97); color:#666; font-size:11px; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .game-toast.show { opacity:1; }
+    .erase-actions button { border-color:#e3c3c3; color:#a44; }
+    @media(max-width:700px) { .shop-overlay { inset:18px; } .shop-close {top:8px;right:8px;} .mp-counter {right:14px;top:62px;} .place-actions button {width:32px;height:32px;} }
     @media(max-width:700px) { .shop-button { bottom: 20px; left: calc(50% - 111px); width: 52px; height: 52px; } .shop-overlay { inset: 14px; border-radius: 16px; } .shop-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; } .shop-card { min-height: 112px; padding: 9px; } .shop-card-icon { height: 34px; font-size: 18px; } .shop-card-name { font-size: 10px; } .shop-card-desc { font-size: 9px; } .shop-overlay.has-details .shop-main { flex-basis: 65%; } .shop-details { flex-basis: 35%; } .shop-detail-body { padding: 12px; } .shop-detail-icon { height: 66px; font-size: 28px; } .shop-detail-name { font-size: 13px; } .shop-detail-description { font-size: 10px; } .shop-detail-bottom { padding: 12px; font-size: 10px; } .shop-empty-icon { width: 48px; height: 48px; font-size: 20px; } .shop-empty-copy { font-size: 9px; } .shop-buy { padding: 10px; font-size: 11px; } .shop-header { padding: 0 12px; } .shop-grid-wrap { padding: 10px; } }
     @media(max-width:380px) { .shop-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .shop-overlay.has-details .shop-main { flex: 0 0 52%; } .shop-details { flex-basis: 48%; } }
 
@@ -86,6 +105,9 @@
     <div class="version">alpha · 01</div>
   </header>
   <div class="status">Untitled canvas</div>
+  <div class="mp-counter" id="mpCounter">20 MP</div>
+  <div class="game-toast" id="gameToast"></div>
+  <div class="world-layer" id="worldLayer"><div class="sell-zone" id="sellZone">SELL ZONE<br>5 × 5</div></div>
   <aside class="inventory-panel" id="inventoryPanel" aria-label="Inventory panel">
     <div class="inventory-header"><span class="inventory-title">INVENTORY</span><button class="inventory-toggle" id="inventoryToggle">Hide</button></div>
     <div class="inventory-empty">Inventory is empty</div>
@@ -96,7 +118,7 @@
   <button class="shop-button" id="shopButton" title="Shop" aria-label="Open shop"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 1.9-1.5L21 8H6"/><circle cx="9.5" cy="20" r="1"/><circle cx="17.5" cy="20" r="1"/></svg></button>
   <section class="shop-overlay" id="shopOverlay" aria-label="Shop window">
     <div class="shop-main">
-      <header class="shop-header"><div class="shop-heading">Shop</div><button class="shop-close" id="shopClose" aria-label="Close shop">×</button></header>
+      <header class="shop-header"><div class="shop-heading">Shop</div></header><button class="shop-close" id="shopClose" aria-label="Close shop">×</button>
       <div class="shop-grid-wrap"><div class="shop-grid" id="shopGrid"></div></div>
     </div>
     <aside class="shop-details" id="shopDetails">
@@ -130,6 +152,10 @@
     const shopGrid = document.querySelector('#shopGrid');
     const shopDetailBody = document.querySelector('#shopDetailBody');
     const shopDetails = document.querySelector('#shopDetails');
+    const worldLayer = document.querySelector('#worldLayer');
+    const sellZone = document.querySelector('#sellZone');
+    const mpCounter = document.querySelector('#mpCounter');
+    const gameToast = document.querySelector('#gameToast');
     let inventoryOpen = true;
     function setInventoryOpen(open) {
       inventoryOpen = open;
@@ -141,49 +167,43 @@
     inventoryToggle.addEventListener('click', () => setInventoryOpen(false));
     inventoryShow.addEventListener('click', () => setInventoryOpen(true));
     const placeholderItems = [
-      {name:'Logic Gate',icon:'⌁',description:'A basic logic component. Placeholder entry for the future component catalog.'},
-      {name:'Wire',icon:'╱',description:'Connects components together. This is placeholder content.'},
-      {name:'Switch',icon:'◉',description:'A manually controlled input for testing circuits.'},
-      {name:'LED',icon:'◈',description:'A visual output indicator for a circuit.'},
-      {name:'AND Gate',icon:'∧',description:'Outputs true only when all inputs are true.'},
-      {name:'OR Gate',icon:'∨',description:'Outputs true when at least one input is true.'},
-      {name:'NOT Gate',icon:'¬',description:'Inverts a single input.'},
-      {name:'XOR Gate',icon:'⊕',description:'Outputs true when the inputs differ.'},
-      {name:'Input Node',icon:'●',description:'Placeholder input node for circuit experiments.'},
-      {name:'Output Node',icon:'○',description:'Placeholder output node for circuit experiments.'},
-      {name:'Clock',icon:'◷',description:'A future timed signal source.'},
-      {name:'Splitter',icon:'⋔',description:'A placeholder signal routing component.'}
+      {id:'conveyor-straight',name:'Conveyor Straight',icon:'⇢',description:'A straight conveyor segment for transporting items.',price:2,type:'conveyor'},
+      {id:'conveyor-turn',name:'Conveyor Turn',icon:'↱',description:'A turning conveyor segment for changing item direction.',price:2,type:'conveyor'},
+      {id:'manual-extractor',name:'Manual Extractor',icon:'⛏',description:'Click it to produce 1 MP. Has a 2-second cooldown between uses.',price:10,type:'extractor'}
     ];
     let selectedShopItem = null;
-    function restoreShopSelection() {
-      if (selectedShopItem === null) return;
-      const item = placeholderItems[selectedShopItem];
-      const card = shopGrid.children[selectedShopItem];
-      if (item && card) selectShopItem(item, card);
+    let mp = 20;
+    const inventoryCounts = Object.fromEntries(placeholderItems.map(item=>[item.id,0]));
+    const machines = [];
+    let placement = null, eraseSelection = null, toastTimer = null;
+    const priceFmt = v => v+' MP';
+    function toast(msg) { gameToast.textContent=msg; gameToast.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>gameToast.classList.remove('show'),1900); }
+    function updateMoney() { mpCounter.textContent=mp+' MP'; }
+    function updateInventory() {
+      inventoryPanel.querySelector('.inventory-empty').textContent = Object.values(inventoryCounts).some(n=>n>0) ? '' : 'Inventory is empty';
+      let container=inventoryPanel.querySelector('.inventory-items');
+      if(!container){container=document.createElement('div');container.className='inventory-items';container.style.cssText='display:flex;flex-direction:column;gap:8px;padding:10px;overflow:auto;';inventoryPanel.insertBefore(container,inventoryResize);}
+      container.innerHTML='';
+      placeholderItems.forEach(item=>{if(!inventoryCounts[item.id])return;const row=document.createElement('button');row.style.cssText='border:1px solid #eee;border-radius:10px;padding:10px;background:#fff;color:#555;text-align:left;display:flex;justify-content:space-between;align-items:center;';row.innerHTML='<span>'+item.icon+' &nbsp; '+item.name+'</span><b>'+inventoryCounts[item.id]+'</b>';row.onclick=()=>{if(buildTool.classList.contains('active')){placement={item,rotation:0};toast('Tap the grid to preview placement');}};container.appendChild(row);});
     }
+    function restoreShopSelection() { if(selectedShopItem===null)return; const item=placeholderItems[selectedShopItem]; const card=shopGrid.children[selectedShopItem]; if(item&&card)selectShopItem(item,card); }
     function openShop() { shopOverlay.classList.add('open'); restoreShopSelection(); }
     function closeShop() { shopOverlay.classList.remove('open'); }
-    function selectShopItem(item, card) {
-      selectedShopItem = placeholderItems.indexOf(item);
-      shopGrid.querySelectorAll('.selected').forEach(c=>c.classList.remove('selected'));
-      card.classList.add('selected');
-      shopOverlay.classList.add('has-details');
-      shopDetailBody.innerHTML = '<div class="shop-detail-icon">'+item.icon+'</div><div class="shop-detail-name">'+item.name+'</div><div class="shop-detail-description">'+item.description+'</div>';
-      const buy = document.querySelector('#shopBuy');
-      buy.disabled = false;
-      buy.textContent = 'Buy item';
-      document.querySelector('#shopBuyNote').textContent = '';
+    function selectShopItem(item,card) {
+      selectedShopItem=placeholderItems.indexOf(item);
+      shopGrid.querySelectorAll('.selected').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');
+      shopDetailBody.innerHTML='<div class="shop-detail-icon">'+item.icon+'</div><div class="shop-detail-name">'+item.name+'</div><div class="shop-detail-description">'+item.description+'</div><div class="shop-card-price">'+priceFmt(item.price)+'</div>';
+      const buy=document.querySelector('#shopBuy'); buy.disabled=mp<item.price; buy.textContent='Buy · '+priceFmt(item.price); document.querySelector('#shopBuyNote').textContent=mp>=item.price?'':'Not enough MP';
     }
-    placeholderItems.forEach(item => {
-      const card=document.createElement('button');
-      card.className='shop-card';
-      card.innerHTML='<div class="shop-card-icon">'+item.icon+'</div><div class="shop-card-name">'+item.name+'</div><div class="shop-card-desc">'+item.description+'</div>';
-      card.addEventListener('click',()=>selectShopItem(item,card));
-      shopGrid.appendChild(card);
+    function refreshShopCards(){shopGrid.querySelectorAll('.shop-card').forEach((c,i)=>{const item=placeholderItems[i];c.querySelector('.shop-card-owned').textContent='Owned: '+inventoryCounts[item.id];c.querySelector('.shop-card-price').textContent=priceFmt(item.price);});if(selectedShopItem!==null)selectShopItem(placeholderItems[selectedShopItem],shopGrid.children[selectedShopItem]);}
+    placeholderItems.forEach(item=>{
+      const card=document.createElement('button');card.className='shop-card';
+      card.innerHTML='<div class="shop-card-icon">'+item.icon+'</div><div class="shop-card-name">'+item.name+'</div><div class="shop-card-desc">'+item.description+'</div><div class="shop-card-price">'+priceFmt(item.price)+'</div><div class="shop-card-owned">Owned: 0</div>';
+      card.onclick=()=>selectShopItem(item,card);shopGrid.appendChild(card);
     });
-    shopButton.addEventListener('click',openShop);
-    document.querySelector('#shopClose').addEventListener('click',closeShop);
-    document.querySelector('#shopBuy').addEventListener('click', () => { document.querySelector('#shopBuyNote').textContent = 'Purchases are not available yet.'; });
+    function buySelected(){if(selectedShopItem===null)return;const item=placeholderItems[selectedShopItem];if(mp<item.price){toast('Not enough MP');return;}mp-=item.price;inventoryCounts[item.id]++;updateMoney();updateInventory();refreshShopCards();toast('Bought '+item.name);}
+    document.querySelector('#shopBuy').addEventListener('click',buySelected);
+    shopButton.addEventListener('click',openShop);document.querySelector('#shopClose').addEventListener('click',closeShop);
     shopOverlay.addEventListener('click',(e)=>{if(e.target===shopOverlay)closeShop();});
     shopOverlay.addEventListener('pointerdown', e => e.stopPropagation());
     shopOverlay.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
