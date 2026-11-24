@@ -201,7 +201,7 @@
       // Feed one Mohx from extractor storage into an adjacent empty conveyor.
       machines.filter(m=>m.item.type==='extractor').forEach(ex=>{
         if(!ex.contents.length)return;
-        const belt=machines.find(b=>b.item.type==='conveyor'&&Math.abs(b.x-ex.x)+Math.abs(b.y-ex.y===1)&&(!b.contents||!b.contents.length));
+        const belt=machines.find(b=>b.item.type==='conveyor'&&Math.abs(b.x-ex.x)+Math.abs(b.y-ex.y)===1&&(!b.contents||!b.contents.length));
         if(belt){ex.contents.shift();belt.contents=['Mohx'];}
       });
       const moves=[];
