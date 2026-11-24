@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>mohxlogic — alpha</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #fff; color: #171717; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .canvas { position: fixed; inset: 0; background-color: #fff; background-image: linear-gradient(to right, #eeeeee 1px, transparent 1px), linear-gradient(to bottom, #eeeeee 1px, transparent 1px); background-size: 32px 32px; }
+    .canvas::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 50%, rgba(255,255,255,.7) 100%); }
+    .topbar { position: fixed; top: 22px; left: 24px; right: 24px; display: flex; align-items: center; justify-content: space-between; z-index: 2; pointer-events: none; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .mark { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: #171717; color: #fff; font-size: 12px; font-weight: 700; letter-spacing: -.5px; }
+    .brand-name { font-size: 14px; font-weight: 650; letter-spacing: -.35px; }
+    .version { padding: 5px 9px; border: 1px solid #e5e5e5; border-radius: 999px; color: #777; background: rgba(255,255,255,.8); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+    .status { position: fixed; top: 72px; left: 24px; color: #aaa; font-size: 11px; letter-spacing: .04em; z-index: 2; pointer-events: none; }
+    .tools { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; align-items: center; padding: 5px; gap: 4px; background: rgba(255,255,255,.94); border: 1px solid #e7e7e7; box-shadow: 0 8px 30px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04); border-radius: 999px; z-index: 3; backdrop-filter: blur(12px); }
+    .tool { width: 54px; height: 46px; border: 0; border-radius: 999px; display: grid; place-items: center; background: transparent; color: #8a8a8a; cursor: pointer; transition: background .18s ease, color .18s ease, transform .18s ease; }
+    .tool:hover { background: #f4f4f4; color: #222; }
+    .tool:active { transform: scale(.94); }
+    .tool.active { background: #171717; color: #fff; }
+    .tool svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .hint { position: fixed; bottom: 38px; right: 24px; z-index: 2; font-size: 10px; color: #b0b0b0; letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
+    @media (max-width: 520px) { .topbar { top: 16px; left: 16px; right: 16px; } .status { left: 16px; top: 62px; } .hint { display: none; } .tools { bottom: 20px; } }
+  </style>
+</head>
+<body>
+  <main class="canvas" aria-label="Grid canvas"></main>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">m.</div>
+      <div class="brand-name">mohxlogic</div>
+    </div>
+    <div class="version">alpha · 01</div>
+  </header>
+  <div class="status">Untitled canvas</div>
+  <div class="hint">Infinite workspace · preview</div>
+  <nav class="tools" aria-label="Canvas tools">
+    <button class="tool active" data-tool="build" aria-label="Hammer tool" title="Hammer">
+      <svg viewBox="0 0 24 24"><path d="m14.5 6.5 3-3 3 3-3 3"/><path d="m13 8 7-7"/><path d="m12.5 8.5 3 3-8.8 8.8a2.1 2.1 0 0 1-3-3L12.5 8.5Z"/></svg>
+    </button>
+    <button class="tool" data-tool="erase" aria-label="Dustbin tool" title="Dustbin">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="m6.5 7 .9 13h9.2l.9-13"/><path d="M9 7V4h6v3"/><path d="M10 10v7M14 10v7"/></svg>
+    </button>
+  </nav>
+  <script>
+    const tools = document.querySelectorAll('.tool');
+    tools.forEach((button) => {
+      button.addEventListener('click', () => {
+        tools.forEach((tool) => tool.classList.remove('active'));
+        button.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
