@@ -49,7 +49,8 @@
     .shop-grid-wrap { padding: 18px; overflow-y: auto; flex: 1; touch-action: pan-y; overscroll-behavior: contain; }
     .shop-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
     .shop-card { border: 1px solid #e8e8e8; background: #fff; border-radius: 13px; padding: 14px; min-height: 138px; display: flex; flex-direction: column; text-align: left; cursor: pointer; transition: border-color .18s ease, background-color .18s ease; touch-action: manipulation; }
-    .shop-card:hover,.shop-card.selected { border-color: #bdbdbd; background: #fafafa; }\n    .inventory-item.selected { outline:2px solid #333!important; outline-offset:1px; background:#f7f7f7!important; }
+    .shop-card:hover,.shop-card.selected { border-color: #bdbdbd; background: #fafafa; }
+    .inventory-item.selected { outline:2px solid #333!important; outline-offset:1px; background:#f7f7f7!important; }
     .shop-card-icon { height: 48px; display: grid; place-items: center; color: #777; font-size: 22px; }
     .shop-card-name { font-size: 12px; font-weight: 600; }
     .shop-card-desc { margin-top: 5px; font-size: 10px; line-height: 1.45; color: #999; }
@@ -189,29 +190,27 @@
     function cancelPlacement(){placement=null;worldLayer.querySelector('.ghost-machine')?.remove();worldLayer.querySelector('.placement-controls')?.remove();}
     function renderEraseActions(){if(!eraseSelection)return;const m=eraseSelection;let act=worldLayer.querySelector('.erase-controls');if(!act){act=document.createElement('div');act.className='place-actions erase-controls';worldLayer.appendChild(act);}act.style.left=(m.x*32)+'px';act.style.top=(m.y*32-20)+'px';act.innerHTML='<button aria-label="Delete">✓</button><button aria-label="Cancel">×</button>';act.children[0].onclick=e=>{e.stopPropagation();const i=machines.indexOf(m);if(i>=0){machines.splice(i,1);m.el.remove();}eraseSelection=null;act.remove();toast('Deleted machine');};act.children[1].onclick=e=>{e.stopPropagation();eraseSelection=null;act.remove();};}
     canvas.addEventListener('click',e=>{if(placement){const p=gridCoords(e.clientX,e.clientY);placement.x=p.x;placement.y=p.y;renderGhost();}else eraseSelection=null;});
-    function syncWorld(){renderWorld();}\n    function dirFor(m){return ((m.rotation||0)%4+4)%4;}
+    function syncWorld(){renderWorld();}
+    function dirFor(m){return ((m.rotation||0)%4+4)%4;}
     const dirs=[{x:1,y:0},{x:0,y:1},{x:-1,y:0},{x:0,y:-1}];
     function at(x,y){return machines.find(m=>m.x===x&&m.y===y);}
     function conveyorOutput(m){const d=dirs[dirFor(m)];return {x:m.x+d.x,y:m.y+d.y};}
     function updateMachineTitles(){machines.forEach(m=>{if(m.item.type==='extractor')m.el.title='Manual Extractor · '+m.contents.length+'/5 Mohx';else m.el.title=m.item.name+(m.contents.length?' · '+m.contents.length+' Mohx':'');});}
     function sellAtZone(x,y){return inSellZone(x,y);}
     function simTick(){
-      const snapshot=machines.map(m=>({m,items:[...(m.contents||[])]}));
-      snapshot.forEach(({m,items})=>{if(m.item.type==='extractor'&&items.length&& !machines.some(b=>b.item.type==='conveyor'&&Math.abs(b.x-m.x)+Math.abs(b.y-m.y)===1)){return;}});
-      // Extractors with no adjacent belt retain Mohx in their 5-slot container.
+      // Feed one Mohx from extractor storage into an adjacent empty conveyor.
       machines.filter(m=>m.item.type==='extractor').forEach(ex=>{
-        if(ex.contents.length===0)return;
-        const belt=machines.find(b=>b.item.type==='conveyor'&&Math.abs(b.x-ex.x)+Math.abs(b.y-ex.y)===1);
-        if(belt){ex.contents.shift();belt.contents=belt.contents||[];if(belt.contents.length<1)belt.contents.push('Mohx');}
+        if(!ex.contents.length)return;
+        const belt=machines.find(b=>b.item.type==='conveyor'&&Math.abs(b.x-ex.x)+Math.abs(b.y-ex.y===1)&&(!b.contents||!b.contents.length));
+        if(belt){ex.contents.shift();belt.contents=['Mohx'];}
       });
-      // Move one Mohx per conveyor per tick along its rotated output.
       const moves=[];
-      machines.filter(m=>m.item.type==='conveyor'&&(m.contents||[]).length).forEach(b=>{
+      machines.filter(b=>b.item.type==='conveyor'&&b.contents&&b.contents.length).forEach(b=>{
         const p=conveyorOutput(b),next=at(p.x,p.y);
-        if(sellAtZone(p.x,p.y)){moves.push({from:b,sell:true});}
-        else if(next&&next.item.type==='conveyor'&&(!next.contents||next.contents.length===0)){moves.push({from:b,to:next});}
+        if(sellAtZone(p.x,p.y))moves.push({from:b,sell:true});
+        else if(next&&next.item.type==='conveyor'&&(!next.contents||!next.contents.length))moves.push({from:b,to:next});
       });
-      moves.forEach(move=>{move.from.contents.shift();if(move.sell){mp++;updateMoney();toast('Sold 1 Mohx · +1 MP');}else{move.to.contents=move.to.contents||[];move.to.contents.push('Mohx');}});
+      moves.forEach(m=>{m.from.contents.shift();if(m.sell){mp++;updateMoney();toast('Sold Mohx · +1 MP');}else m.to.contents=['Mohx'];});
       updateMachineTitles();
     }
     setInterval(simTick,1000);
@@ -274,7 +273,8 @@
     function render() {
       const size = grid * zoom;
       canvas.style.backgroundSize = size + 'px ' + size + 'px';
-      const anchorX=Math.floor(innerWidth/2/32)*32+16, anchorY=Math.floor(innerHeight/2/32)*32+16;\n      canvas.style.backgroundPosition = (anchorX*zoom+offsetX) + 'px ' + (anchorY*zoom+offsetY) + 'px';
+      const anchorX=Math.floor(innerWidth/2/32)*32+16, anchorY=Math.floor(innerHeight/2/32)*32+16;
+      canvas.style.backgroundPosition = (anchorX*zoom+offsetX) + 'px ' + (anchorY*zoom+offsetY) + 'px';
       zoomValue.textContent = Math.round(zoom * 100) + '%';
       renderWorld();
     }
@@ -290,7 +290,8 @@
     const midpoint = (a,b) => ({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
 
     canvas.addEventListener('pointerdown', (e) => {
-      if (placement) { e.preventDefault(); return; }\n      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (placement) { e.preventDefault(); return; }
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       canvas.setPointerCapture(e.pointerId);
       if (pointers.size === 2) {
